@@ -1,0 +1,25 @@
+# Dados da competição (pesados, protegidos por licença — NÃO versionar)
+data/
+*.zip
+*.tar
+*.tar.gz
+
+# Modelos / checkpoints
+models/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Clone do baseline (puxar via git clone quando precisar)
+baseline/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
