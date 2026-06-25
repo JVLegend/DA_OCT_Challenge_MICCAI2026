@@ -45,5 +45,8 @@ fase_atual: Submission (23/06 → 07/09/2026)
 - [[docs/02_dados_e_labels]] — estrutura dos arquivos, as 10 classes, formato PNG
 - [[docs/03_protocolo_submissao]] — interface Docker, build/run, regras de I/O
 - [[docs/04_cronograma_e_regras]] — fases, deadlines, limites de submissão, licença
+- [[docs/05_analise_baseline_e_estrategia]] — fraquezas do baseline, scoring real, estratégia
+- [[docs/06_log_experimentos]] — comparação de runs no val local
+- [[docs/07_insights_forum]] — descobertas do fórum (treino in-container, gotchas, quota)
 
 #PhD #Tecnologia #Saude #Academia
