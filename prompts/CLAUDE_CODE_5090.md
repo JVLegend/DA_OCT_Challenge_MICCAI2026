@@ -20,6 +20,15 @@ cirúrgicas, simplicidade, e itere até bater o critério de sucesso).
 - Leia `docs/05_analise_baseline_e_estrategia.md` e `docs/06_log_experimentos.md` antes de começar.
 - **Número-base a bater:** `macula_score = 0.2234` no val local (script abaixo).
 
+## Passo 0 — Obter o repositório (público)
+```bash
+git clone https://github.com/JVLegend/DA_OCT_Challenge_MICCAI2026.git
+cd DA_OCT_Challenge_MICCAI2026
+```
+O **código** vem pelo clone. Os **dados NÃO** (são gitignored / protegidos) — o João precisa
+te entregar o zip `miccai_satelite_starting_kit_*.zip` separadamente (scp/cloud/USB) e colocá-lo
+em `data/`.
+
 ## Pré-requisitos (verifique primeiro; pare com mensagem clara se faltar)
 1. Os dados precisam estar em `data/starter_kit/` (descompactados). Se houver só o zip
    `miccai_satelite_starting_kit_*.zip` em `data/`, descompacte:
