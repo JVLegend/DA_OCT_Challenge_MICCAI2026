@@ -27,7 +27,7 @@ command -v uv >/dev/null || pip install -q uv
 if ! "$VENV" -c "import torch,sys; sys.exit(0 if torch.cuda.is_available() else 1)" 2>/dev/null; then
   uv pip install --python "$VENV" torch --index-url https://download.pytorch.org/whl/cu128
 fi
-uv pip install --python "$VENV" -r requirements.txt gdown >/dev/null
+uv pip install --python "$VENV" -r requirements.txt "gdown>=5" >/dev/null
 
 # ---------- 2. dados ----------
 log "2/7 Dados"
@@ -38,8 +38,12 @@ if [ ! -d "data/starter_kit/app_ingestion/input_data/train" ]; then
     echo "       (Peça o link ao João, salve em data/DATA_URL.txt e rode de novo.)"; exit 2
   fi
   mkdir -p data
-  echo "[INFO] baixando dados do Drive..."
-  "$VENV" -m gdown --fuzzy "$URL" -O data/starter_kit.zip
+  # extrai o file-id de links tipo /file/d/<id>/view (robusto em qualquer versão do gdown)
+  FID="$(echo "$URL" | sed -n 's#.*/file/d/\([^/]*\)/.*#\1#p')"
+  [ -z "$FID" ] && FID="$(echo "$URL" | sed -n 's#.*[?&]id=\([^&]*\).*#\1#p')"
+  if [ -n "$FID" ]; then DL="https://drive.google.com/uc?id=$FID"; else DL="$URL"; fi
+  echo "[INFO] baixando dados do Drive ($DL)..."
+  "$VENV" -m gdown "$DL" -O data/starter_kit.zip
   mkdir -p data/starter_kit && unzip -q -o data/starter_kit.zip -d data/starter_kit
 fi
 TRAIN="data/starter_kit/app_ingestion/input_data/train"
