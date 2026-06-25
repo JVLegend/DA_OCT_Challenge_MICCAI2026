@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""
+Inferência arch-aware e robusta a path.
+
+- Reconstrói o UNet com a arquitetura salva no sidecar `<model>.arch.json` (ou via --channels),
+  então funciona com qualquer tamanho de modelo (round 1 baseline OU archs maiores).
+- Descoberta de imagens RECURSIVA e tolerante: nunca volta 0 silenciosamente. Isso evita o gotcha
+  do fórum (#120): "rodou nas 173 mas deu Failed" porque o glob achou 0 imagens no path do servidor.
+
+Uso:
+  python scripts/infer_daoct.py --input_dir <dir> --output_dir <dir> --model_path <ckpt.pth>
+"""
+import argparse, glob, json, os
+import numpy as np
+import torch
+import cv2
+from monai.networks.nets import UNet
+from monai.transforms import Compose, LoadImage, EnsureChannelFirst, ScaleIntensity, Resize
+
+NUM_CLASSES = 10
+DEFAULT_CHANNELS = [16, 32, 64, 128]
+
+
+def load_arch(model_path, cli_channels, cli_img):
+    side = model_path + ".arch.json"
+    if os.path.exists(side):
+        a = json.load(open(side))
+        return a.get("channels", DEFAULT_CHANNELS), a.get("img_size", cli_img), a.get("num_classes", NUM_CLASSES)
+    ch = [int(c) for c in cli_channels.split(",")] if cli_channels else DEFAULT_CHANNELS
+    return ch, cli_img, NUM_CLASSES
+
+
+def discover_images(input_dir):
+    """Recursivo e tolerante. Tenta padrões em ordem; loga o que achou."""
+    pats = ["**/*-image.png", "**/*_image.png", "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.tif", "**/*.tiff"]
+    for p in pats:
+        hits = sorted(glob.glob(os.path.join(input_dir, p), recursive=True))
+        hits = [h for h in hits if "-mask" not in os.path.basename(h).lower()]
+        if hits:
+            print(f"[INFO] discovery: {len(hits)} imagens via padrão '{p}' em {input_dir}")
+            return hits
+    print(f"[WARN] NENHUMA imagem encontrada em {input_dir} (tentei {pats})")
+    return []
+
+
+def out_name(img_path):
+    base = os.path.basename(img_path)
+    for tok in ["-image.png", "_image.png"]:
+        if tok in base:
+            return base.replace(tok, "-mask.png")
+    stem = os.path.splitext(base)[0]
+    return f"{stem}-mask.png"
+
+
+def main(args):
+    device = torch.device("cuda" if torch.cuda.is_available()
+                          else ("mps" if torch.backends.mps.is_available() else "cpu"))
+    channels, img_size, num_classes = load_arch(args.model_path, args.channels, args.img_size)
+    strides = tuple(2 for _ in range(len(channels) - 1))
+    model = UNet(spatial_dims=2, in_channels=1, out_channels=num_classes,
+                 channels=tuple(channels), strides=strides, num_res_units=2).to(device)
+    print(f"[INFO] device={device.type} arch=UNet{tuple(channels)} img_size={img_size}")
+    model.load_state_dict(torch.load(args.model_path, map_location=device))
+    model.eval()
+
+    pre = Compose([LoadImage(image_only=True, reverse_indexing=False),
+                   EnsureChannelFirst(), ScaleIntensity(), Resize((img_size, img_size))])
+
+    images = discover_images(args.input_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
+    for img_path in images:
+        img = torch.as_tensor(pre(img_path)).unsqueeze(0).to(device)
+        with torch.no_grad():
+            pred = torch.argmax(model(img), dim=1)[0].cpu().numpy().astype(np.uint8)
+        cv2.imwrite(os.path.join(args.output_dir, out_name(img_path)), pred)
+    print(f"[INFO] inferência completa: {len(images)} máscaras em {args.output_dir}")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input_dir", required=True)
+    ap.add_argument("--output_dir", required=True)
+    ap.add_argument("--model_path", required=True)
+    ap.add_argument("--channels", default="", help="ex '32,64,128,256' (ignorado se houver sidecar .arch.json)")
+    ap.add_argument("--img_size", type=int, default=256)
+    main(ap.parse_args())

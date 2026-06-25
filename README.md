@@ -27,6 +27,23 @@ fase_atual: Submission (23/06 → 07/09/2026)
 
 ---
 
+## 🚀 Rodar tudo na RTX 5090 (autônomo)
+
+Abra este repo na máquina com a 5090 e peça ao **Claude Code** para *"ler o repositório e executar
+o que for necessário"*. Ele lê o [CLAUDE.md](CLAUDE.md), detecta a GPU e segue o
+[RUNBOOK_5090.md](RUNBOOK_5090.md): instala dependências (torch **cu128**), baixa os dados do
+**Google Drive**, treina **2 rodadas** (baseline + arch maior/alta-res), avalia, grava
+`results/` + [STATUS.md](STATUS.md), faz **commit + push**, e adianta a próxima rodada (F2).
+
+Ou, direto no terminal da 5090:
+```bash
+# 1) salve o link do Drive dos dados:
+echo "<LINK_DO_GOOGLE_DRIVE>" > data/DATA_URL.txt
+# 2) rode tudo:
+bash scripts/run_all_5090.sh
+```
+Acompanhe o resultado em **[STATUS.md](STATUS.md)** (atualizado automaticamente e versionado).
+
 ## Estrutura da pasta
 
 | Pasta | O que vai aqui |

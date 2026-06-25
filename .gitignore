@@ -23,3 +23,10 @@ venv/
 
 # macOS
 .DS_Store
+
+# Link do Drive (local, não versionar)
+data/DATA_URL.txt
+
+# Resultados SÃO versionados (relatórios, scores, status, checkpoints pequenos)
+!results/
+!results/**

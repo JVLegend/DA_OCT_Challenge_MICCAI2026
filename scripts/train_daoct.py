@@ -23,7 +23,7 @@ Exemplos:
 A arquitetura padrão é IGUAL à do baseline (UNet 16/32/64/128) para o checkpoint ser
 drop-in no infer do kit. Se mudar --channels, é preciso atualizar o build_model do infer.
 """
-import argparse, glob, json, os, random, sys
+import argparse, glob, json, os, random, sys, time
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -165,6 +165,8 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="cap de amostras p/ sanity (0=tudo)")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--compile", action="store_true", help="torch.compile (CUDA novas)")
+    ap.add_argument("--time_budget_min", type=float, default=0,
+                    help="para o treino após N minutos (0=desligado). Útil p/ caber nas 2h do servidor")
     ap.add_argument("--semi", action="store_true", help="(experimental) pseudo-labels nos não rotulados")
     args = ap.parse_args()
 
@@ -213,7 +215,11 @@ def main():
 
     os.makedirs(args.out, exist_ok=True)
     ckpt_path = os.path.join(args.out, "unet_maestro2_semi.pth")
+    # sidecar com a arquitetura -> infer_daoct.py reconstrói o modelo certo p/ qualquer arch
+    with open(ckpt_path + ".arch.json", "w") as f:
+        json.dump({"channels": channels, "img_size": args.img_size, "num_classes": NUM_CLASSES}, f)
     best_val, history = -1.0, []
+    t0 = time.time()
 
     for epoch in range(1, args.epochs + 1):
         model.train()
@@ -239,8 +245,12 @@ def main():
             best_val = val_dice
             torch.save(model.state_dict() if not args.compile else model._orig_mod.state_dict(), ckpt_path)
             flag = "  <- best (salvo)"
+        elapsed_min = (time.time() - t0) / 60.0
         print(f"[{epoch:3d}/{args.epochs}] loss={ep_loss/len(train_loader):.4f} "
-              f"val_dice={val_dice:.4f}{flag}")
+              f"val_dice={val_dice:.4f}{flag}  ({elapsed_min:.1f} min)")
+        if args.time_budget_min and elapsed_min >= args.time_budget_min:
+            print(f"[INFO] teto de tempo ({args.time_budget_min} min) atingido — parando na época {epoch}.")
+            break
 
     report = {"best_val_dice": best_val, "epochs": args.epochs, "channels": channels,
               "img_size": args.img_size, "aug": args.aug, "amp": str(amp_dtype),
