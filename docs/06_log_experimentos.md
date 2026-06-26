@@ -17,7 +17,8 @@ pra comparar é **macula_score** (desempenho no Maestro2 fácil).
 
 | Data | ID | Submissão | **Score real** | Notas |
 |---|---|---|---|---|
-| 2026-06-26 | 3150 | round3_semi (fix workers=0) | **0.65** | 1ª bala. Treino in-container 437 img (150ep sup val_dice 0.8925 + 80ep semi, 4293/4367 pseudo) + infer 628 +refine +native, 26min. |
+| 2026-06-26 | 3150 | round3_semi (fix workers=0) | **0.65** | 1ª bala. Mácula 0.74 · WideField 0.55. Treino in-container 437 img (150ep sup + 80ep semi, 4293/4367 pseudo) + infer 628, 26min. |
+| 2026-06-26 | 3152 | round4_widefield (descoberta genérica) | **0.65** | 2ª bala. Mácula 0.75 · WideField **0.55 (inalterado)**. → descoberta genérica NÃO move WideField. Gargalo é domínio/geometria, não dado faltando. |
 
 > ⚠️ **O val-proxy local não previu o leaderboard:** macula 0.24 / final 0.12 local → **0.65 real**.
 > O placar real inclui WideField (50%), Triton (penalidade) e MASD severo — nada disso aparece no

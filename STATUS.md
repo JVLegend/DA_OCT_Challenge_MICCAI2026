@@ -45,6 +45,12 @@
 Se WideField → ~0.70, final → ~0.72 = **top 3**. Toda a próxima rodada mira **WideField sem regredir a Mácula**.
 Bônus da página: runtime real **≥6h** (usamos 26min!) · λ_penalty real **1.5** · α<0.4 (doente pesa mais).
 
+**Bala #2 (ID 3152 — descoberta genérica de não rotulados):** Final 0.65 · Mácula 0.75 · **WideField 0.55 (inalterado)**.
+→ **Hipótese DESCARTADA:** o gargalo do WideField NÃO é dado faltando na semi. Pseudo-rotular wide-field
+com teacher treinado só em Mácula não ajuda. WideField = problema de **domínio/geometria** (curvatura do
+campo largo que o modelo nunca viu). **2/5 balas usadas.** Próximo: generalização geométrica via augmentation
+(elástica + affine forte simulando curvatura do wide-field), **sem precisar de labels de wide-field**.
+
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
 | Vendor | N | mean conf | ≥0.85 | ≥0.90 | ≥0.95 |
