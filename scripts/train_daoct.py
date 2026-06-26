@@ -36,7 +36,7 @@ from monai.losses import DiceCELoss
 from monai.metrics import DiceMetric
 from monai.transforms import (
     Compose, LoadImaged, EnsureChannelFirstd, ScaleIntensityd, Resized, ToTensord,
-    RandFlipd, RandRotate90d, RandAffined,
+    RandFlipd, RandRotate90d, RandAffined, RandGridDistortiond,
     RandScaleIntensityd, RandShiftIntensityd, RandAdjustContrastd,
     RandGaussianNoised, RandGaussianSmoothd,
 )
@@ -107,10 +107,18 @@ def build_transforms(img_size: int, aug: str, train: bool):
             RandGaussianNoised(keys="image", prob=0.3, std=0.04),
             RandGaussianSmoothd(keys="image", prob=0.3),
         ]
-        if aug == "strong":
+        if aug in ("strong", "widefield"):
+            aff = dict(prob=0.4, rotate_range=0.15, shear_range=0.1, scale_range=0.15)
+            if aug == "widefield":
+                # generalização geométrica p/ wide-field (forte curvatura/FOV): grid distortion +
+                # affine bem maior. Valida-se no proxy (scripts/eval_proxy_widefield.py).
+                aff = dict(prob=0.6, rotate_range=0.30, shear_range=0.2, scale_range=0.35)
+                spatial.append(RandGridDistortiond(
+                    keys=keys, num_cells=6, distort_limit=0.3, prob=0.6,
+                    mode=("bilinear", "nearest"), padding_mode="border",
+                ))
             spatial.append(RandAffined(
-                keys=keys, prob=0.4, rotate_range=0.15, shear_range=0.1,
-                scale_range=0.15, mode=("bilinear", "nearest"), padding_mode="border",
+                keys=keys, mode=("bilinear", "nearest"), padding_mode="border", **aff,
             ))
         base += spatial + appearance
     base.append(ToTensord(keys=keys))
@@ -156,7 +164,7 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--channels", default=",".join(map(str, DEFAULT_CHANNELS)),
                     help="canais do UNet (default = baseline, drop-in no infer)")
-    ap.add_argument("--aug", choices=["none", "basic", "strong"], default="strong")
+    ap.add_argument("--aug", choices=["none", "basic", "strong", "widefield"], default="strong")
     ap.add_argument("--val_frac", type=float, default=0.15)
     ap.add_argument("--device", default="auto", choices=["auto", "cuda", "mps", "cpu"])
     ap.add_argument("--amp", default="auto", choices=["auto", "bf16", "fp16", "off"])

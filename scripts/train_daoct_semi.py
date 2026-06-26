@@ -32,7 +32,7 @@ from monai.losses import DiceCELoss
 from monai.metrics import DiceMetric
 from monai.transforms import (
     Compose, LoadImaged, EnsureChannelFirstd, ScaleIntensityd, Resized, ToTensord,
-    RandFlipd, RandRotate90d, RandAffined,
+    RandFlipd, RandRotate90d, RandAffined, RandGridDistortiond,
     RandScaleIntensityd, RandShiftIntensityd, RandAdjustContrastd,
     RandGaussianNoised, RandGaussianSmoothd,
     LoadImage, EnsureChannelFirst, ScaleIntensity, Resize,
@@ -135,10 +135,16 @@ def build_transforms(img_size, aug, train):
             RandGaussianNoised(keys="image", prob=0.3, std=0.04),
             RandGaussianSmoothd(keys="image", prob=0.3),
         ]
-        if aug == "strong":
+        if aug in ("strong", "widefield"):
+            aff = dict(prob=0.4, rotate_range=0.15, shear_range=0.1, scale_range=0.15)
+            if aug == "widefield":
+                aff = dict(prob=0.6, rotate_range=0.30, shear_range=0.2, scale_range=0.35)
+                spatial.append(RandGridDistortiond(
+                    keys=keys, num_cells=6, distort_limit=0.3, prob=0.6,
+                    mode=("bilinear", "nearest"), padding_mode="border",
+                ))
             spatial.append(RandAffined(
-                keys=keys, prob=0.4, rotate_range=0.15, shear_range=0.1,
-                scale_range=0.15, mode=("bilinear", "nearest"), padding_mode="border",
+                keys=keys, mode=("bilinear", "nearest"), padding_mode="border", **aff,
             ))
         base += spatial + appearance
     base.append(ToTensord(keys=keys))
@@ -228,7 +234,7 @@ def main():
     ap.add_argument("--img_size",        type=int,   default=384)
     ap.add_argument("--lr",              type=float, default=3e-4)
     ap.add_argument("--channels",        default="32,64,128,256")
-    ap.add_argument("--aug",             choices=["none","basic","strong"], default="strong")
+    ap.add_argument("--aug",             choices=["none","basic","strong","widefield"], default="strong")
     ap.add_argument("--val_frac",        type=float, default=0.15)
     ap.add_argument("--conf_threshold",  type=float, default=0.85,
                     help="mean max-prob mínima p/ aceitar pseudo-label (0-1)")

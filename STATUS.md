@@ -51,6 +51,14 @@ com teacher treinado só em Mácula não ajuda. WideField = problema de **domín
 campo largo que o modelo nunca viu). **2/5 balas usadas.** Próximo: generalização geométrica via augmentation
 (elástica + affine forte simulando curvatura do wide-field), **sem precisar de labels de wide-field**.
 
+### Investigação (proxy offline de curvatura) — confirma a hipótese
+Wide-field = FOV **12×9mm** (vs Mácula 6×6) → camadas muito mais curvas + disco óptico. Proxy
+(`scripts/eval_proxy_widefield.py`) deforma a val de Mácula e mede a queda do round3_semi:
+`amp0.12→-4% · amp0.20→-9% · amp0.30→**0.60** (-25%) · amp0.45→0.32`. A curvatura **forte (0.30)**
+reproduz a faixa do WideField real (0.55) → **fragilidade geométrica confirmada**. Bala #3 = treinar com
+`--aug widefield` (grid distortion + affine grande) e validar no proxy (queda menor + Mácula intacta)
+ANTES de submeter. Experimento offline: `scripts/exp_widefield_aug.sh`.
+
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
 | Vendor | N | mean conf | ≥0.85 | ≥0.90 | ≥0.95 |
