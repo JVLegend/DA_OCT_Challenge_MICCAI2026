@@ -27,28 +27,41 @@ def py():
 
 
 def find_training_root(input_dir: str) -> str:
+    # candidatos rápidos (cobre /app/input/data, .../data/train, etc.)
     for cand in [
         os.path.join(input_dir, "train"),
         os.path.join(input_dir, "data", "train"),
+        os.path.join(input_dir, "data"),
         input_dir,
     ]:
         if os.path.isdir(os.path.join(cand, "Topcon_Maestro2")):
             return cand
+    # fallback robusto: acha .../Topcon_Maestro2 em QUALQUER nível e usa o pai
+    for p in Path(input_dir).rglob("Topcon_Maestro2"):
+        if p.is_dir():
+            return str(p.parent)
     return input_dir
 
 
-def find_inference_dir(input_dir: str) -> str:
+def find_inference_dir(input_dir: str, training_root: str = "") -> str:
     for cand in [
-        os.path.join(input_dir, "ref"),          # server: /app/input/ref
+        os.path.join(input_dir, "ref"),            # server: /app/input/ref
+        os.path.join(input_dir, "data", "ref"),
         os.path.join(input_dir, "val", "images"),
         os.path.join(input_dir, "val"),
+        os.path.join(input_dir, "test"),
         os.path.join(input_dir, "testing_data"),
-        input_dir,
+        os.path.join(input_dir, "images"),
     ]:
-        if os.path.isdir(cand):
-            imgs = list(Path(cand).rglob("*-image.png"))
-            if imgs:
-                return cand
+        if os.path.isdir(cand) and any(Path(cand).rglob("*-image.png")):
+            return cand
+    # fallback: 1º diretório com imagens que NÃO esteja sob o training_root
+    # (evita inferir nas próprias imagens de treino se o layout for inesperado)
+    tr = os.path.abspath(training_root) if training_root else None
+    for p in sorted(Path(input_dir).rglob("*-image.png")):
+        d = os.path.abspath(str(p.parent))
+        if not tr or not d.startswith(tr):
+            return str(p.parent)
     return input_dir
 
 
@@ -84,12 +97,24 @@ def main():
     log(f"sub_dir      = {sub_dir}")
 
     data_root  = find_training_root(input_dir)
-    infer_dir  = find_inference_dir(input_dir)
+    infer_dir  = find_inference_dir(input_dir, data_root)
     ckpt_out   = os.path.join(sub_dir, "checkpoints", "unet_maestro2_semi.pth")
     pseudo_dir = os.path.join(sub_dir, "checkpoints", "pseudo")
 
     log(f"data_root    = {data_root}")
     log(f"infer_dir    = {infer_dir}")
+
+    # Backup do checkpoint embarcado ANTES de treinar (o treino sobrescreve ckpt_out).
+    # Serve de fallback de inferência se o treino não produzir nada dentro do tempo.
+    fallback_ckpt = None
+    _shipped = find_pretrained(sub_dir)
+    if _shipped and os.path.exists(_shipped):
+        import shutil
+        fallback_ckpt = os.path.join(sub_dir, "checkpoints", "_fallback.pth")
+        shutil.copy2(_shipped, fallback_ckpt)
+        if os.path.exists(_shipped + ".arch.json"):
+            shutil.copy2(_shipped + ".arch.json", fallback_ckpt + ".arch.json")
+        log(f"fallback embarcado salvo em {fallback_ckpt}")
 
     pretrained = find_pretrained(sub_dir)
     warm_start = pretrained and pretrained != ckpt_out
@@ -173,12 +198,18 @@ def main():
     log(f"Semi-supervisão concluída em {elapsed_min():.1f} min")
 
     # ── 3. Inferência ─────────────────────────────────────────────────────────
-    log(f"Inferindo em {infer_dir} → {output_dir}")
+    # Usa o modelo treinado; se o treino não produziu nada (tempo curto/erro), cai no fallback.
+    infer_ckpt = ckpt_out if os.path.exists(ckpt_out) else fallback_ckpt
+    if infer_ckpt is None:
+        infer_ckpt = ckpt_out  # deixa o erro de "arquivo não existe" explícito no log
+    elif infer_ckpt != ckpt_out:
+        log(f"[AVISO] treino não gerou checkpoint — usando fallback embarcado: {infer_ckpt}")
+    log(f"Inferindo em {infer_dir} → {output_dir} (modelo: {infer_ckpt})")
     run([
         py(), "infer_daoct.py",
         "--input_dir",  infer_dir,
         "--output_dir", output_dir,
-        "--model_path", ckpt_out,
+        "--model_path", infer_ckpt,
         "--refine",
         "--native_size",
     ], cwd=sub_dir)

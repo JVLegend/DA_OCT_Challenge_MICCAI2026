@@ -23,8 +23,11 @@ cp "$ROOT/scripts/infer_daoct.py"      "$ROOT/submission/"
 CKPT_SRC=""
 for candidate in \
     "$ROOT/models/round3_semi/unet_maestro2_semi.pth" \
+    "$ROOT/results/round3_semi/unet_maestro2_semi.pth" \
     "$ROOT/models/round2/unet_maestro2_semi.pth" \
-    "$ROOT/models/round1/unet_maestro2_semi.pth"; do
+    "$ROOT/results/round2/unet_maestro2_semi.pth" \
+    "$ROOT/models/round1/unet_maestro2_semi.pth" \
+    "$ROOT/results/round1/unet_maestro2_semi.pth"; do
     if [ -f "$candidate" ]; then
         CKPT_SRC="$candidate"; break
     fi
@@ -37,9 +40,13 @@ if [ -n "$CKPT_SRC" ]; then
     echo "[OK] checkpoint: $CKPT_SRC"
 fi
 
-# Empacota: cd submission/ e zipa o CONTEÚDO (.) para que arquivos fiquem na raiz
+# Empacota: cd submission/ e zipa o CONTEÚDO (.) para que arquivos fiquem na raiz.
+# Exclui lixo de treino local (pseudo-masks, relatórios) — só código + checkpoint vão.
+rm -f "$OUT"
 cd "$ROOT/submission"
-zip -r "$OUT" . -x "*.pyc" -x "__pycache__/*" -x ".DS_Store"
+zip -r "$OUT" . -x "*.pyc" -x "__pycache__/*" -x ".DS_Store" \
+    -x "checkpoints/pseudo/*" -x "checkpoints/train_report.json" -x "checkpoints/_fallback.pth*" \
+    -x "checkpoints/pretrained.pth*"
 
 echo ""
 echo "[OK] ZIP gerado: $OUT"
