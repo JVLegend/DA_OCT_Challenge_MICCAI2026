@@ -162,7 +162,7 @@ def main():
         "--channels", channels,
         "--amp", "auto",
         "--aug", "strong",
-        "--workers", "4",
+        "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
         "--seed", str(SEED),
         "--time_budget_min", f"{budget_sup:.1f}",
     ]
@@ -190,7 +190,7 @@ def main():
         "--aug", "strong",
         "--conf_threshold", "0.82",
         "--semi_weight", "0.5",
-        "--workers", "4",
+        "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
         "--seed", str(SEED),
         "--time_budget_min", f"{budget_semi:.1f}",
     ]
