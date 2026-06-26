@@ -13,9 +13,15 @@ pra comparar é **macula_score** (desempenho no Maestro2 fácil).
 | 2026-06-26 | **F2 round3_semi** — pseudo-labels 1095/1099 (conf≥0.85), warm-start round2, 150ep, 4.8min | **0.2412** | 0.1206 | +8.0% vs baseline. best_val_dice=0.9019. |
 | 2026-06-26 | **F3 round3_semi+refine** — Gaussian one-hot horizontal (σ=2.5px) no pós-processamento | **0.2414** | 0.1207 | +8.1% vs baseline. Melhor até agora. ZIP pronto: submission_round3_semi.zip |
 
-> Próximo: F1 — supervisionado forte (aug + épocas + Dice+CE + arch). Meta: macula_score bem
-> acima de 0.22 no val local antes de partir pra generalização (F2).
-> ⚠️ Lembrete: melhorar só o macula_score **não** garante leaderboard — o placar real pesa
-> doente (0.7), WideField (50%) e penaliza cair no Triton. Por isso o val cross-vendor da F2.
+## 🏁 Leaderboard real (submissões)
+
+| Data | ID | Submissão | **Score real** | Notas |
+|---|---|---|---|---|
+| 2026-06-26 | 3150 | round3_semi (fix workers=0) | **0.65** | 1ª bala. Treino in-container 437 img (150ep sup val_dice 0.8925 + 80ep semi, 4293/4367 pseudo) + infer 628 +refine +native, 26min. |
+
+> ⚠️ **O val-proxy local não previu o leaderboard:** macula 0.24 / final 0.12 local → **0.65 real**.
+> O placar real inclui WideField (50%), Triton (penalidade) e MASD severo — nada disso aparece no
+> val local. **Âncora = 0.65; restam 4 balas (+1 final).** Próxima melhoria mira MASD/borda e
+> generalização, medida idealmente num val cross-vendor (F5) antes de gastar bala.
 
 #Tecnologia #Academia

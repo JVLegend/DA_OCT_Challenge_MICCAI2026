@@ -8,8 +8,8 @@
 - ✅ F2: semi-supervisão por pseudo-labels. Round3_semi é o melhor checkpoint.
 - ✅ F3: refinamento de bordas (Gaussian one-hot horizontal, +0.0002 macula_score).
 - ✅ F3: relatório de confiança cross-vendor (ver `results/crossvendor_confidence.json`).
-- ✅ F4: pasta `submission/` completa + `submission_round3_semi.zip` pronto para submissão.
-- ⏳ Próximo: submeter 1ª bala + F5 (MASD borda em resolução nativa, val cross-vendor com holdout).
+- ✅ F4: **SUBMETIDO** (ID 3150, 26/06) → **leaderboard Score 0.65** (bala 1/5 usada).
+- ⏳ Próximo: F5 (val cross-vendor holdout) + atacar MASD/borda antes da bala #2.
 
 ## Resultados (val local = Maestro2/Mácula/saudável — proxy, não leaderboard)
 
@@ -22,6 +22,16 @@
 | **round3_semi + refine (F3)** | idem + Gaussian one-hot | 0.9019 | **0.2414** | **0.1207** | **+8.1%** |
 
 **Melhor (local): round3_semi + refinamento.**
+
+## 🏁 Leaderboard REAL (1ª submissão)
+
+| Submissão | ID | Score | Detalhe |
+|---|---|---|---|
+| round3_semi (fix workers=0) | **3150** | **0.65** | Finished. Treino in-container: 437 rotuladas, supervisionado 150ep (val_dice 0.8925) + semi 80ep, pseudo 4293/4367 aceitos, infer 628 imgs +refine +native, 26min total. |
+
+> **Aprendizado-chave:** o val-proxy local (macula 0.24 / final 0.12) **NÃO prevê** o leaderboard.
+> Âncora real agora = **0.65**. Toda melhoria futura se mede contra isso (e só via submissão real,
+> já que WideField/Triton não existem no val local). Restam **4 balas** (+1 final).
 
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
