@@ -33,6 +33,18 @@
 > Âncora real agora = **0.65**. Toda melhoria futura se mede contra isso (e só via submissão real,
 > já que WideField/Triton não existem no val local). Restam **4 balas** (+1 final).
 
+### Breakdown (do leaderboard, 26/06) — onde estamos
+| # | Time | Final | Mácula | WideField |
+|---|---|---|---|---|
+| 1 | pooyak | 0.82 | 0.86 | 0.77 |
+| 2 | nairulislam | 0.78 | 0.83 | 0.72 |
+| 3 | rickychan2014 | 0.69 | 0.72 | 0.66 |
+| 8 | **JV (nós, 3150)** | **0.65** | **0.74** | **0.55** |
+
+**Diagnóstico:** Mácula 0.74 = **3ª melhor** (forte). **WideField 0.55 = gargalo** (líderes 0.72–0.77).
+Se WideField → ~0.70, final → ~0.72 = **top 3**. Toda a próxima rodada mira **WideField sem regredir a Mácula**.
+Bônus da página: runtime real **≥6h** (usamos 26min!) · λ_penalty real **1.5** · α<0.4 (doente pesa mais).
+
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
 | Vendor | N | mean conf | ≥0.85 | ≥0.90 | ≥0.95 |

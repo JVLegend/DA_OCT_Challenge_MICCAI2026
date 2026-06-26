@@ -15,7 +15,7 @@ import json, os, subprocess, sys, time
 from pathlib import Path
 
 SEED = 42
-TOTAL_BUDGET_MIN = 95   # 95 min treino + ~5 min infer = bem dentro das 2h
+TOTAL_BUDGET_MIN = 110   # folga: a rodada real fez 150+80ep em 26min; cap só protege contra overrun
 
 
 def log(msg):
@@ -173,8 +173,9 @@ def main():
     log(f"Supervisionado concluído em {elapsed_min():.1f} min")
 
     # ── 2. Semi-supervisão ────────────────────────────────────────────────────
-    epochs_semi = 60 if warm_start else 80
-    budget_semi = min(40, remaining_min() * 0.90)
+    # mais épocas de semi: agora inclui wide-field (descoberta genérica) — mais domínio p/ adaptar
+    epochs_semi = 80 if warm_start else 120
+    budget_semi = min(60, remaining_min() * 0.90)
 
     cmd_semi = [
         py(), "train_daoct_semi.py",

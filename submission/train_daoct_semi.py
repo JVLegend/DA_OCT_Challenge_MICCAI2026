@@ -97,14 +97,20 @@ def list_supervised(root: Path):
 
 
 def list_unlabeled_images(root: Path):
+    """
+    Genérico: TODA imagem sem máscara-par, em QUALQUER subpasta de `root`.
+    Pega Spectralis/Cirrus/Maestro2_unlabeled E TAMBÉM **wide-field** e qualquer
+    outro domínio não rotulado que o servidor inclua — o gargalo do WideField era
+    a lista hardcoded que ignorava o protocolo wide-field.
+    """
     imgs = []
-    for vendor in UNLABELED_DEVICES:
-        for status in ["Diseased", "Healthy"]:
-            folder = root / vendor / status
-            if not folder.exists():
-                continue
-            for p in sorted(glob.glob(str(folder / "*-image.png"))):
-                imgs.append((vendor, p))
+    for p in sorted(root.rglob("*-image.png")):
+        mask = Path(str(p)[:-len("-image.png")] + "-mask.png")
+        if mask.exists():
+            continue  # rotulada (supervisionada) — pula
+        rel = p.relative_to(root)
+        vendor = rel.parts[0] if len(rel.parts) > 1 else "root"
+        imgs.append((vendor, str(p)))
     return imgs
 
 
@@ -182,7 +188,7 @@ def generate_pseudo_labels(model, unlabeled_imgs, img_size, device, conf_thresho
         accepted_by_vendor[v] = accepted_by_vendor.get(v, 0) + 1
 
     print(f"[PSEUDO] aceitos {len(accepted)}/{len(unlabeled_imgs)} (conf>={conf_threshold}):")
-    for v in UNLABELED_DEVICES:
+    for v in sorted(total_by_vendor):  # domínios descobertos (inclui wide-field se houver)
         tot = total_by_vendor.get(v, 0)
         acc = accepted_by_vendor.get(v, 0)
         print(f"         {v}: {acc}/{tot} ({100*acc/max(1,tot):.1f}%)")
@@ -271,14 +277,11 @@ def main():
     else:
         pseudo_items = []
         for p in glob.glob(os.path.join(pseudo_dir, "*-pseudo_mask.png")):
-            # recupera imagem original: procura nos vendors
+            # recupera imagem original em qualquer subpasta (busca genérica)
             stem = os.path.basename(p).replace("-pseudo_mask.png", "-image.png")
-            for vendor in UNLABELED_DEVICES:
-                for status in ["Diseased", "Healthy"]:
-                    candidate = str(data_root / vendor / status / stem)
-                    if os.path.exists(candidate):
-                        pseudo_items.append({"image": candidate, "label": p})
-                        break
+            matches = list(Path(data_root).rglob(stem))
+            if matches:
+                pseudo_items.append({"image": str(matches[0]), "label": p})
         print(f"[PSEUDO] reutilizando {len(pseudo_items)} pseudo-masks de {pseudo_dir}")
 
     # ── fase 2: re-treino ─────────────────────────────────────────────────────
