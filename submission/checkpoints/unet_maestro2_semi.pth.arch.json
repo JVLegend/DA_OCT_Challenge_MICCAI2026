@@ -1,0 +1,1 @@
+{"channels": [32, 64, 128, 256], "img_size": 384, "num_classes": 10}

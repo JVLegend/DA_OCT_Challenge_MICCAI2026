@@ -1,0 +1,13 @@
+# Dependências do DA-OCT (exceto torch).
+# ⚠️ Instale o torch SEPARADO, por plataforma:
+#   - 5090 (Blackwell): uv pip install torch --index-url https://download.pytorch.org/whl/cu128
+#   - Kaggle T4: torch já vem pré-instalado
+#   - Mac: uv pip install torch   (CPU/MPS, default)
+monai>=1.4
+opencv-python
+numpy
+pandas
+scipy
+matplotlib
+tqdm
+pillow

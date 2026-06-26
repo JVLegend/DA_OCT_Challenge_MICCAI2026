@@ -1,0 +1,26 @@
+{
+  "Heidelberg_Spectralis": {
+    "n": 225,
+    "mean_conf": 0.9832078798611958,
+    "median_conf": 0.9887567162513733,
+    "pct_above_85": 100.0,
+    "pct_above_90": 99.55555555555556,
+    "pct_above_95": 97.33333333333334
+  },
+  "Zeiss_Cirrus": {
+    "n": 212,
+    "mean_conf": 0.9862292847543392,
+    "median_conf": 0.9896109402179718,
+    "pct_above_85": 100.0,
+    "pct_above_90": 100.0,
+    "pct_above_95": 97.64150943396226
+  },
+  "Topcon_Maestro2_unlabeled": {
+    "n": 662,
+    "mean_conf": 0.9855995738254213,
+    "median_conf": 0.989495575428009,
+    "pct_above_85": 99.8489425981873,
+    "pct_above_90": 99.54682779456193,
+    "pct_above_95": 97.73413897280967
+  }
+}
