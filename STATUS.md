@@ -65,6 +65,16 @@ plain 0.766 vs 0.770 (**Mácula intacta**) · curvatura **0.567 vs 0.509 (+11%, 
 32-256/384 + semi, `--aug widefield`). Ganho esperado no WideField real: **modesto** (proxy ≠ wide-field real,
 que tem também disco óptico/aparência). Pode valer 1 iteração offline a mais (aug + elástica) antes da bala.
 
+**Iteração 2 (anti-overfit, 2 warps):** strong vs widefield vs **widefield2** (grid forte + Rand2DElastic),
+testados em cosseno E radial:
+| aug | plain | cosine.30 | radial.50 |
+|---|---|---|---|
+| strong | 0.770 | 0.509 | 0.490 |
+| widefield | 0.766 | 0.567 | 0.492 |
+| **widefield2** | 0.754 | **0.605** | **0.517** |
+→ **widefield2 vence nos dois warps** (não viciou no proxy), com custo pequeno de Mácula (-2%, deve ser
+menor no modelo cheio). **Escolhido pra bala #3** (supervisionado + semi com `--aug widefield2`).
+
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
 | Vendor | N | mean conf | ≥0.85 | ≥0.90 | ≥0.95 |

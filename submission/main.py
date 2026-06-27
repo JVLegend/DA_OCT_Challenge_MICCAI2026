@@ -161,7 +161,7 @@ def main():
         "--img_size", str(img_size),
         "--channels", channels,
         "--amp", "auto",
-        "--aug", "strong",
+        "--aug", "widefield2",  # generalização geométrica p/ wide-field (validado offline no proxy)
         "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
         "--seed", str(SEED),
         "--time_budget_min", f"{budget_sup:.1f}",
@@ -188,7 +188,7 @@ def main():
         "--img_size", str(img_size),
         "--channels", channels,
         "--amp", "auto",
-        "--aug", "strong",
+        "--aug", "widefield2",  # generalização geométrica p/ wide-field (validado offline no proxy)
         "--conf_threshold", "0.82",
         "--semi_weight", "0.5",
         "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
