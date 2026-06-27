@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """
-Proxy OFFLINE de wide-field: deforma a val de Mácula com curvatura sintética
+Proxy OFFLINE de wide-field: deforma a val de Mácula com geometria sintética
 (mimetiza o FOV 12x9mm do wide-field, que curva muito mais que a Mácula 6x6) e mede
 quanto o modelo degrada. Não é wide-field real, mas dá um GRADIENTE pra ajustar a
 augmentation de generalização geométrica sem gastar bala.
 
+Dois tipos de warp (use ambos p/ não viciar a aug num só):
+  --warp cosine  : curva vertical global (coluna a coluna) — curvatura suave do campo largo
+  --warp radial  : distorção barrel 2D (afasta do centro) — geometria bem diferente
+
 Reporta image_score médio (=média das 10 classes de 0.5·(Dice + exp(-MASD/τ))):
-  - sem warp  (sanity: deve ser alto, ~boa segmentação macular)
-  - com warp  (curvatura): a QUEDA mede a fragilidade geométrica
+  sem warp (sanity) vs com warp (a QUEDA mede a fragilidade geométrica).
 
 Uso:
-  python scripts/eval_proxy_widefield.py --model_path results/round3_semi/unet_maestro2_semi.pth
+  python scripts/eval_proxy_widefield.py --model_path <ckpt.pth> --warp cosine --amp 0.30
 """
 import argparse, glob, json, os, sys
 import numpy as np
 import cv2
 import torch
 from monai.networks.nets import UNet
-from monai.transforms import Compose, LoadImage, EnsureChannelFirst, ScaleIntensity, Resize
+from monai.transforms import Compose, EnsureChannelFirst, ScaleIntensity, Resize
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "data/starter_kit/app_scoring/program"))
@@ -28,15 +31,24 @@ VAL_IMAGES = os.path.join(KIT, "app_ingestion/input_data/val/images")
 VAL_MASKS = os.path.join(KIT, "app_scoring/input/ref/val/masks")
 
 
-def curvature_warp(img, amp_frac, mode):
-    """Desloca cada coluna verticalmente por uma curva suave (cosseno de baixa freq)
-    -> simula a curvatura forte do wide-field. Mesma transformação p/ imagem e máscara."""
+def warp_image(img, amp, mode, warp):
+    """Mesma transformação geométrica p/ imagem (linear) e máscara (nearest)."""
     h, w = img.shape[:2]
-    xs = np.arange(w)
-    dy = (amp_frac * h) * np.cos(2 * np.pi * xs / max(1, w - 1))  # +nas bordas, -no centro
-    mapx = np.tile(xs, (h, 1)).astype(np.float32)
-    mapy = (np.arange(h)[:, None] - dy[None, :]).astype(np.float32)
     interp = cv2.INTER_NEAREST if mode == "mask" else cv2.INTER_LINEAR
+    if warp == "cosine":
+        xs = np.arange(w)
+        dy = (amp * h) * np.cos(2 * np.pi * xs / max(1, w - 1))
+        mapx = np.tile(xs, (h, 1)).astype(np.float32)
+        mapy = (np.arange(h)[:, None] - dy[None, :]).astype(np.float32)
+    elif warp == "radial":  # barrel 2D — afasta do centro
+        yy, xx = np.meshgrid(np.arange(h), np.arange(w), indexing="ij")
+        cx, cy = (w - 1) / 2.0, (h - 1) / 2.0
+        nx, ny = (xx - cx) / max(1.0, cx), (yy - cy) / max(1.0, cy)
+        factor = 1.0 + amp * (nx * nx + ny * ny)
+        mapx = (cx + (xx - cx) * factor).astype(np.float32)
+        mapy = (cy + (yy - cy) * factor).astype(np.float32)
+    else:
+        raise ValueError(warp)
     return cv2.remap(img, mapx, mapy, interpolation=interp, borderMode=cv2.BORDER_REFLECT)
 
 
@@ -62,14 +74,15 @@ def predict(model, img_u8, img_size, device):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model_path", required=True)
-    ap.add_argument("--amp", type=float, default=0.12, help="amplitude da curvatura (fração da altura)")
+    ap.add_argument("--warp", choices=["cosine", "radial"], default="cosine")
+    ap.add_argument("--amp", type=float, default=0.30)
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           else ("mps" if torch.backends.mps.is_available() else "cpu"))
     model, img_size = load_model(args.model_path, device)
-    print(f"[INFO] device={device.type} img_size={img_size} amp={args.amp}")
+    print(f"[INFO] device={device.type} img_size={img_size} warp={args.warp} amp={args.amp}")
 
     masks = sorted(glob.glob(os.path.join(VAL_MASKS, "*-mask.png")))
     if args.limit:
@@ -79,28 +92,24 @@ def main():
     for mp in masks:
         name = os.path.basename(mp).replace("-mask.png", "-image.png")
         ip = os.path.join(VAL_IMAGES, name)
-        if not os.path.exists(ip):
-            continue
         img = cv2.imread(ip, cv2.IMREAD_GRAYSCALE)
         gt = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
         if img is None or gt is None:
             continue
-        # sem warp
         p0 = predict(model, img, img_size, device)
         s0, _, _, _ = compute_image_score(cv2.resize(p0, (gt.shape[1], gt.shape[0]), interpolation=cv2.INTER_NEAREST), gt)
         plain.append(s0)
-        # com curvatura (imagem e máscara deformadas igualmente)
-        img_w = curvature_warp(img, args.amp, "image")
-        gt_w = curvature_warp(gt, args.amp, "mask")
+        img_w = warp_image(img, args.amp, "image", args.warp)
+        gt_w = warp_image(gt, args.amp, "mask", args.warp)
         pw = predict(model, img_w, img_size, device)
         sw, _, _, _ = compute_image_score(cv2.resize(pw, (gt_w.shape[1], gt_w.shape[0]), interpolation=cv2.INTER_NEAREST), gt_w)
         warped.append(sw)
 
     p, w = float(np.mean(plain)), float(np.mean(warped))
-    print(f"\n[PROXY] n={len(plain)}")
-    print(f"  image_score SEM warp  : {p:.4f}")
-    print(f"  image_score COM curvatura: {w:.4f}")
-    print(f"  QUEDA: {p - w:.4f} ({100*(p-w)/max(1e-9,p):.1f}%)  <- mede a fragilidade geométrica")
+    print(f"\n[PROXY] n={len(plain)} warp={args.warp}")
+    print(f"  image_score SEM warp : {p:.4f}")
+    print(f"  image_score COM warp : {w:.4f}")
+    print(f"  QUEDA: {p - w:.4f} ({100*(p-w)/max(1e-9,p):.1f}%)")
 
 
 if __name__ == "__main__":
