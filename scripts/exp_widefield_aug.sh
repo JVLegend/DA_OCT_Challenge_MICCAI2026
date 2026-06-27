@@ -9,6 +9,10 @@ VENV="$ROOT/.venv/bin/python"
 DR="data/starter_kit/app_ingestion/input_data/train"
 
 for AUG in strong widefield; do
+  if [ -f "models/exp_$AUG/train_report.json" ]; then
+    echo "############## SKIP aug=$AUG (já treinado: val_dice=$("$VENV" -c "import json;print(round(json.load(open('models/exp_$AUG/train_report.json'))['best_val_dice'],4))")) ##############"
+    continue
+  fi
   echo "############## TREINO aug=$AUG ##############"
   "$VENV" scripts/train_daoct.py --data_root "$DR" --out "models/exp_$AUG" \
     --epochs 100 --batch_size 8 --img_size 256 --channels 16,32,64,128 \

@@ -59,6 +59,12 @@ reproduz a faixa do WideField real (0.55) → **fragilidade geométrica confirma
 `--aug widefield` (grid distortion + affine grande) e validar no proxy (queda menor + Mácula intacta)
 ANTES de submeter. Experimento offline: `scripts/exp_widefield_aug.sh`.
 
+**Resultado do experimento (16-128/256, 100ep):** `aug=widefield` vs `aug=strong` no proxy curvatura 0.30:
+plain 0.766 vs 0.770 (**Mácula intacta**) · curvatura **0.567 vs 0.509 (+11%, robustez recuperada)**.
+→ Aug geométrica é ganho **líquido positivo e de baixo risco**. Candidata sólida pra bala #3 (modelo cheio
+32-256/384 + semi, `--aug widefield`). Ganho esperado no WideField real: **modesto** (proxy ≠ wide-field real,
+que tem também disco óptico/aparência). Pode valer 1 iteração offline a mais (aug + elástica) antes da bala.
+
 ## Confiança cross-vendor (round3_semi — quanto o modelo generaliza)
 
 | Vendor | N | mean conf | ≥0.85 | ≥0.90 | ≥0.95 |
