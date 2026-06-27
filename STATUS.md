@@ -38,8 +38,13 @@
 |---|---|---|---|---|
 | 1 | pooyak | 0.82 | 0.86 | 0.77 |
 | 2 | nairulislam | 0.78 | 0.83 | 0.72 |
-| **3** | **JV (nós, 3155)** | **0.72** | **0.78** | **0.67** |
-| 4 | Rahul | 0.69 | 0.70 | 0.69 |
+| **3** | **nós (3156, big384)** | **0.74** | **0.78** | **0.69** |
+| 4 | rickychan2014 | 0.70 | 0.72 | 0.68 |
+
+**Bala #4 (big384) = 0.74** (de 0.72): WideField 0.67→0.69, Mácula 0.78 estável. Modelo maior = +0.02
+(retornos decrescentes vs a aug). **4/5 balas usadas → resta 1 + a final.** Gap p/ 2º = 0.04 (Mácula é a
+maior lacuna: 0.78 vs 0.83-0.86). Submissão vai até **07/09** → dá pra iterar offline sem pressa e só
+gastar a última bala com ganho validado. Próximo lever forte não testado: **512px** (precisão MASD/borda).
 
 **Bala #3 (widefield2) = 0.72** (de 0.65): WideField **0.55→0.67 (+0.12)**, Mácula **0.75→0.78 (+0.03, subiu!)**.
 O proxy-offline previu o ganho geométrico e acertou. **3/5 balas usadas (2 + final).** Estamos na zona de
