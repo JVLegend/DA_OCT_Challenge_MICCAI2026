@@ -33,17 +33,22 @@
 > Âncora real agora = **0.65**. Toda melhoria futura se mede contra isso (e só via submissão real,
 > já que WideField/Triton não existem no val local). Restam **4 balas** (+1 final).
 
-### Breakdown (do leaderboard, 26/06) — onde estamos
+### Ranking ATUAL (27/06) — 🥉 3º LUGAR
 | # | Time | Final | Mácula | WideField |
 |---|---|---|---|---|
 | 1 | pooyak | 0.82 | 0.86 | 0.77 |
 | 2 | nairulislam | 0.78 | 0.83 | 0.72 |
-| 3 | rickychan2014 | 0.69 | 0.72 | 0.66 |
-| 8 | **JV (nós, 3150)** | **0.65** | **0.74** | **0.55** |
+| **3** | **JV (nós, 3155)** | **0.72** | **0.78** | **0.67** |
+| 4 | Rahul | 0.69 | 0.70 | 0.69 |
 
-**Diagnóstico:** Mácula 0.74 = **3ª melhor** (forte). **WideField 0.55 = gargalo** (líderes 0.72–0.77).
-Se WideField → ~0.70, final → ~0.72 = **top 3**. Toda a próxima rodada mira **WideField sem regredir a Mácula**.
-Bônus da página: runtime real **≥6h** (usamos 26min!) · λ_penalty real **1.5** · α<0.4 (doente pesa mais).
+**Bala #3 (widefield2) = 0.72** (de 0.65): WideField **0.55→0.67 (+0.12)**, Mácula **0.75→0.78 (+0.03, subiu!)**.
+O proxy-offline previu o ganho geométrico e acertou. **3/5 balas usadas (2 + final).** Estamos na zona de
+prêmio (top 3 = MICCAI + US$ 250; top 5 = eficiência). Gap p/ 2º = 0.06, p/ 1º = 0.10.
+Bônus da página: runtime real **≥6h** (usamos ~30min!) · λ_penalty **1.5** · α<0.4 (doente pesa mais).
+
+**Onde ainda há teto:** Mácula 0.78 vs líderes 0.83-0.86 · WideField 0.67 vs 0.72-0.77 → os líderes são
+melhores nos DOIS → provável base mais forte (resolução maior/arch maior). Bala #4 deve subir os dois
+(candidato: **512px** p/ precisão de borda/MASD, validável no proxy offline antes de gastar).
 
 **Bala #2 (ID 3152 — descoberta genérica de não rotulados):** Final 0.65 · Mácula 0.75 · **WideField 0.55 (inalterado)**.
 → **Hipótese DESCARTADA:** o gargalo do WideField NÃO é dado faltando na semi. Pseudo-rotular wide-field
