@@ -15,7 +15,7 @@ import json, os, subprocess, sys, time
 from pathlib import Path
 
 SEED = 42
-TOTAL_BUDGET_MIN = 110   # folga: a rodada real fez 150+80ep em 26min; cap só protege contra overrun
+TOTAL_BUDGET_MIN = 100   # modelo maior (48-384) é ~2-3x mais lento/época; cap mantém total < 2h com folga
 
 
 def log(msg):
@@ -140,16 +140,16 @@ def main():
     else:
         log("Sem checkpoint pré-treinado — treino supervisionado completo")
         pretrained_backup = None
-        epochs_sup  = 150
-        budget_sup  = min(55, remaining_min() * 0.55)
+        epochs_sup  = 200
+        budget_sup  = min(50, remaining_min() * 0.55)
 
-    # Lê arch do sidecar (para manter mesma arch do pré-treinado)
+    # Arch maior (48-384) — validada offline no proxy (ganha em Mácula e robustez geométrica).
     arch_file = (pretrained_backup or "") + ".arch.json" if pretrained_backup else None
-    channels = "32,64,128,256"
+    channels = "48,96,192,384"
     img_size  = 384
     if arch_file and os.path.exists(arch_file):
         a = json.load(open(arch_file))
-        channels = ",".join(str(c) for c in a.get("channels", [32, 64, 128, 256]))
+        channels = ",".join(str(c) for c in a.get("channels", [48, 96, 192, 384]))
         img_size  = a.get("img_size", 384)
 
     cmd_sup = [
@@ -174,8 +174,8 @@ def main():
 
     # ── 2. Semi-supervisão ────────────────────────────────────────────────────
     # mais épocas de semi: agora inclui wide-field (descoberta genérica) — mais domínio p/ adaptar
-    epochs_semi = 80 if warm_start else 120
-    budget_semi = min(60, remaining_min() * 0.90)
+    epochs_semi = 100 if warm_start else 150
+    budget_semi = min(48, remaining_min() * 0.90)
 
     cmd_semi = [
         py(), "train_daoct_semi.py",

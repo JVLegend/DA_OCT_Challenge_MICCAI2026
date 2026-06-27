@@ -47,8 +47,12 @@ prêmio (top 3 = MICCAI + US$ 250; top 5 = eficiência). Gap p/ 2º = 0.06, p/ 1
 Bônus da página: runtime real **≥6h** (usamos ~30min!) · λ_penalty **1.5** · α<0.4 (doente pesa mais).
 
 **Onde ainda há teto:** Mácula 0.78 vs líderes 0.83-0.86 · WideField 0.67 vs 0.72-0.77 → os líderes são
-melhores nos DOIS → provável base mais forte (resolução maior/arch maior). Bala #4 deve subir os dois
-(candidato: **512px** p/ precisão de borda/MASD, validável no proxy offline antes de gastar).
+melhores nos DOIS → provável base mais forte (resolução maior/arch maior). Bala #4 deve subir os dois.
+
+**Bala #4 (preparada): arch maior 48-96-192-384 + treino mais longo (200/150ep).** Teste de capacidade offline
+(aug=widefield2, 256px): 48-384 **ganha em tudo** vs 16-128 — plain 0.781 vs 0.754, cosine 0.644 vs 0.605,
+radial 0.522 vs 0.517, val_dice 0.884 vs 0.872. No servidor (≈20× mais dados) o ganho tende a ser maior.
+Mantém widefield2 + 384px. Zip: `submission_round6_big384.zip`. **Falta gastar a bala #4** (restam 2 + final).
 
 **Bala #2 (ID 3152 — descoberta genérica de não rotulados):** Final 0.65 · Mácula 0.75 · **WideField 0.55 (inalterado)**.
 → **Hipótese DESCARTADA:** o gargalo do WideField NÃO é dado faltando na semi. Pseudo-rotular wide-field
