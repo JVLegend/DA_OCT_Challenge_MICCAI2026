@@ -213,6 +213,7 @@ def main():
         "--model_path", infer_ckpt,
         "--refine",
         "--native_size",
+        "--tta",  # test-time aug (h-flip + 2 escalas) — validado offline, +0.045 no WideField
     ], cwd=sub_dir)
 
     log(f"Concluído em {elapsed_min():.1f} min total.")

@@ -79,6 +79,30 @@ def refine_boundaries(pred: np.ndarray, sigma: float = 2.5) -> np.ndarray:
     return smoothed.argmax(axis=-1).astype(np.uint8)
 
 
+def tta_predict(model, x):
+    """TTA: média de softmax sobre h-flip + 2 escalas (1.0, 1.15). SEM v-flip — inverteria a
+    ordem vertical das camadas da retina. Validado offline (cosine/WideField +0.045)."""
+    import torch.nn.functional as F
+    H, W = x.shape[-2], x.shape[-1]
+    accum, n = None, 0
+    for scale in (1.0, 1.15):
+        if scale == 1.0:
+            xs = x
+        else:  # múltiplo de 8 (UNet com 3 downsamples exige)
+            nh, nw = int(round(H * scale / 8)) * 8, int(round(W * scale / 8)) * 8
+            xs = F.interpolate(x, size=(nh, nw), mode="bilinear", align_corners=False)
+        for flip in (False, True):
+            v = torch.flip(xs, dims=[3]) if flip else xs
+            p = torch.softmax(model(v).float(), 1)
+            if flip:
+                p = torch.flip(p, dims=[3])
+            if p.shape[-2:] != x.shape[-2:]:
+                p = F.interpolate(p, size=x.shape[-2:], mode="bilinear", align_corners=False)
+            accum = p if accum is None else accum + p
+            n += 1
+    return accum / n
+
+
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available()
                           else ("mps" if getattr(torch.backends, "mps", None)
@@ -88,7 +112,8 @@ def main(args):
     model = UNet(spatial_dims=2, in_channels=1, out_channels=num_classes,
                  channels=tuple(channels), strides=strides, num_res_units=2).to(device)
     print(f"[INFO] device={device.type} arch=UNet{tuple(channels)} img_size={img_size}"
-          + (" +refine" if args.refine else "") + (" +native" if args.native_size else ""))
+          + (" +refine" if args.refine else "") + (" +native" if args.native_size else "")
+          + (" +tta" if args.tta else ""))
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model.eval()
 
@@ -107,7 +132,8 @@ def main(args):
 
         img = torch.as_tensor(pre(img_path)).unsqueeze(0).to(device)
         with torch.no_grad():
-            pred = torch.argmax(model(img), dim=1)[0].cpu().numpy().astype(np.uint8)
+            probs = tta_predict(model, img) if args.tta else torch.softmax(model(img).float(), 1)
+            pred = torch.argmax(probs, dim=1)[0].cpu().numpy().astype(np.uint8)
 
         if args.refine:
             pred = refine_boundaries(pred)
@@ -129,4 +155,5 @@ if __name__ == "__main__":
     ap.add_argument("--img_size", type=int, default=256)
     ap.add_argument("--refine", action="store_true", help="suaviza limites de camada (melhora MASD)")
     ap.add_argument("--native_size", action="store_true", help="salva máscara na resolução original da imagem")
+    ap.add_argument("--tta", action="store_true", help="test-time aug: h-flip + 2 escalas (média de softmax)")
     main(ap.parse_args())
