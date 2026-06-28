@@ -57,6 +57,16 @@ gastar a última bala com ganho validado.
 pede lever direto: **boundary/surface loss** e/ou **TTA** (custo zero de treino). Plano: combinar 512 +
 TTA/boundary numa bala #5 forte, validada offline, antes de gastar a última bala.
 
+**TTA validado (offline, inferência-pura, sem retreino):**
+| config | plain | cosine.30 | radial.50 |
+|---|---|---|---|
+| 384 base (=bala #4) | 0.766 | 0.625 | 0.556 |
+| **384 +TTA** | 0.772 | **0.671** | 0.576 |
+| 512 +TTA | 0.778 | 0.679 | 0.597 |
+→ **TTA é o ganho dominante e grátis** (cosine/WideField +0.045). 512 sobre 384 adiciona pouco + risco de
+orçamento (1.8× mais lento). **Recomendação bala #5 = big384 + 384px + widefield2 + TTA** (confiável,
+pega quase todo o ganho sem risco). 512 fica como possível stretch.
+
 **Bala #3 (widefield2) = 0.72** (de 0.65): WideField **0.55→0.67 (+0.12)**, Mácula **0.75→0.78 (+0.03, subiu!)**.
 O proxy-offline previu o ganho geométrico e acertou. **3/5 balas usadas (2 + final).** Estamos na zona de
 prêmio (top 3 = MICCAI + US$ 250; top 5 = eficiência). Gap p/ 2º = 0.06, p/ 1º = 0.10.

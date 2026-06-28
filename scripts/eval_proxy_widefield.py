@@ -63,11 +63,34 @@ def load_model(model_path, device):
     return m, img_size
 
 
-def predict(model, img_u8, img_size, device):
+def predict(model, img_u8, img_size, device, tta=False):
     pre = Compose([EnsureChannelFirst(channel_dim="no_channel"), ScaleIntensity(), Resize((img_size, img_size))])
-    x = torch.as_tensor(pre(img_u8.astype(np.float32))).unsqueeze(0).to(device)
+    x = torch.as_tensor(pre(img_u8.astype(np.float32))).unsqueeze(0).to(device)  # [1,1,H,W]
     with torch.no_grad():
-        pred = torch.argmax(model(x), 1)[0].cpu().numpy().astype(np.uint8)
+        if not tta:
+            probs = torch.softmax(model(x).float(), 1)
+        else:
+            # TTA: média de softmax sobre [identidade, h-flip] e 2 escalas. SEM v-flip
+            # (inverteria a ordem vertical das camadas da retina).
+            accum, n = None, 0
+            H, W = x.shape[-2], x.shape[-1]
+            for scale in (1.0, 1.15):
+                if scale == 1.0:
+                    xs = x
+                else:  # tamanho múltiplo de 8 (UNet com 3 downsamples exige)
+                    nh, nw = int(round(H * scale / 8)) * 8, int(round(W * scale / 8)) * 8
+                    xs = torch.nn.functional.interpolate(x, size=(nh, nw), mode="bilinear", align_corners=False)
+                for flip in (False, True):
+                    v = torch.flip(xs, dims=[3]) if flip else xs
+                    p = torch.softmax(model(v).float(), 1)
+                    if flip:
+                        p = torch.flip(p, dims=[3])
+                    if p.shape[-2:] != x.shape[-2:]:
+                        p = torch.nn.functional.interpolate(p, size=x.shape[-2:], mode="bilinear", align_corners=False)
+                    accum = p if accum is None else accum + p
+                    n += 1
+            probs = accum / n
+        pred = torch.argmax(probs, 1)[0].cpu().numpy().astype(np.uint8)
     return cv2.resize(pred, (img_u8.shape[1], img_u8.shape[0]), interpolation=cv2.INTER_NEAREST)
 
 
@@ -77,6 +100,7 @@ def main():
     ap.add_argument("--warp", choices=["cosine", "radial"], default="cosine")
     ap.add_argument("--amp", type=float, default=0.30)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--tta", action="store_true", help="test-time aug: h-flip + 2 escalas")
     args = ap.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available()
@@ -96,12 +120,12 @@ def main():
         gt = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
         if img is None or gt is None:
             continue
-        p0 = predict(model, img, img_size, device)
+        p0 = predict(model, img, img_size, device, tta=args.tta)
         s0, _, _, _ = compute_image_score(cv2.resize(p0, (gt.shape[1], gt.shape[0]), interpolation=cv2.INTER_NEAREST), gt)
         plain.append(s0)
         img_w = warp_image(img, args.amp, "image", args.warp)
         gt_w = warp_image(gt, args.amp, "mask", args.warp)
-        pw = predict(model, img_w, img_size, device)
+        pw = predict(model, img_w, img_size, device, tta=args.tta)
         sw, _, _, _ = compute_image_score(cv2.resize(pw, (gt_w.shape[1], gt_w.shape[0]), interpolation=cv2.INTER_NEAREST), gt_w)
         warped.append(sw)
 
