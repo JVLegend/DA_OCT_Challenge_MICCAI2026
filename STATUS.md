@@ -44,7 +44,18 @@
 **Bala #4 (big384) = 0.74** (de 0.72): WideField 0.67→0.69, Mácula 0.78 estável. Modelo maior = +0.02
 (retornos decrescentes vs a aug). **4/5 balas usadas → resta 1 + a final.** Gap p/ 2º = 0.04 (Mácula é a
 maior lacuna: 0.78 vs 0.83-0.86). Submissão vai até **07/09** → dá pra iterar offline sem pressa e só
-gastar a última bala com ganho validado. Próximo lever forte não testado: **512px** (precisão MASD/borda).
+gastar a última bala com ganho validado.
+
+**Sweep de resolução (offline, 16-128/widefield2, proxy):**
+| img_size | plain | cosine.30 | radial.50 |
+|---|---|---|---|
+| 256 | 0.754 | 0.605 | 0.517 |
+| 384 (atual) | 0.766 | 0.625 | 0.556 |
+| **512** | **0.772** | **0.629** | **0.575** |
+→ 512 ganha nos 3, mas **retornos decrescentes 384→512** no plain (+0.005); só radial sobe forte (+0.019)
+→ 512 ajuda mais WideField que Mácula. **512 sozinho = ganho modesto.** A lacuna da Mácula (precisão MASD)
+pede lever direto: **boundary/surface loss** e/ou **TTA** (custo zero de treino). Plano: combinar 512 +
+TTA/boundary numa bala #5 forte, validada offline, antes de gastar a última bala.
 
 **Bala #3 (widefield2) = 0.72** (de 0.65): WideField **0.55→0.67 (+0.12)**, Mácula **0.75→0.78 (+0.03, subiu!)**.
 O proxy-offline previu o ganho geométrico e acertou. **3/5 balas usadas (2 + final).** Estamos na zona de
