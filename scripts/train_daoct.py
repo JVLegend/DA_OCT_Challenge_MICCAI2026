@@ -32,7 +32,7 @@ import torch
 
 from monai.data import CacheDataset, DataLoader
 from monai.networks.nets import UNet
-from monai.losses import DiceCELoss
+from monai.losses import DiceCELoss, HausdorffDTLoss
 from monai.metrics import DiceMetric
 from monai.transforms import (
     Compose, LoadImaged, EnsureChannelFirstd, ScaleIntensityd, Resized, ToTensord,
@@ -180,6 +180,10 @@ def main():
     ap.add_argument("--compile", action="store_true", help="torch.compile (CUDA novas)")
     ap.add_argument("--time_budget_min", type=float, default=0,
                     help="para o treino após N minutos (0=desligado). Útil p/ caber nas 2h do servidor")
+    ap.add_argument("--boundary_weight", type=float, default=0.0,
+                    help="peso do HausdorffDTLoss (0=off). HD~53x o Dice, então use ~0.005-0.02 (boundary ~0.3-1x do Dice)")
+    ap.add_argument("--boundary_warmup_frac", type=float, default=0.2,
+                    help="fração das épocas antes de ligar o boundary loss (deixa Dice estabilizar)")
     ap.add_argument("--semi", action="store_true", help="(experimental) pseudo-labels nos não rotulados")
     args = ap.parse_args()
 
@@ -222,6 +226,10 @@ def main():
     if args.compile and device.type == "cuda":
         model = torch.compile(model)
     loss_fn = DiceCELoss(to_onehot_y=True, softmax=True)
+    # boundary loss (Hausdorff DT): otimiza a POSIÇÃO da fronteira das camadas = exatamente o MASD.
+    # Com warmup: só entra depois que o Dice/CE estabiliza (DT em máscaras ruins é instável).
+    loss_bd = HausdorffDTLoss(softmax=True, to_onehot_y=True, include_background=True) if args.boundary_weight > 0 else None
+    bd_warmup = int(args.epochs * args.boundary_warmup_frac)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
     scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
@@ -245,6 +253,13 @@ def main():
             with ctx:
                 logits = model(x)
                 loss = loss_fn(logits, y)
+                if loss_bd is not None and epoch >= bd_warmup:
+                    # HausdorffDTLoss usa distance-transform (float64) -> quebra no MPS; cai no CPU lá.
+                    # No servidor (CUDA) roda nativo. O autograd lida com a transferência de device.
+                    if device.type == "mps":
+                        loss = loss + args.boundary_weight * loss_bd(logits.float().cpu(), y.cpu()).to(device)
+                    else:
+                        loss = loss + args.boundary_weight * loss_bd(logits.float(), y)
             if use_scaler:
                 scaler.scale(loss).backward(); scaler.step(opt); scaler.update()
             else:
