@@ -21,6 +21,7 @@ pra comparar é **macula_score** (desempenho no Maestro2 fácil).
 | 2026-06-26 | 3152 | round4_widefield (descoberta genérica) | **0.65** | 2ª bala. Mácula 0.75 · WideField **0.55 (inalterado)**. → descoberta genérica NÃO move WideField. Gargalo é domínio/geometria, não dado faltando. |
 | 2026-06-27 | 3155 | round5_widefield2 (aug geométrica) | **0.72** 🥉 | 3ª bala. Mácula **0.78** (+0.03) · WideField **0.67** (+0.12!). Aug widefield2 (grid+elástica) destravou o WideField. **3º lugar.** Proxy offline previu certo. |
 | 2026-06-27 | 3156 | round6_big384 (arch 48-384 + treino longo) | **0.74** 🥉 | 4ª bala. Mácula 0.78 · WideField **0.69** (+0.02). Modelo maior = ganho modesto (retornos decrescentes). Seguimos 3º. 1 bala + final restantes. |
+| 2026-06-28 | 3164 | round7_tta (TTA inferência) | **0.75** | 5ª bala (última). Mácula 0.79 · WideField 0.70 (TTA +0.01 real, proxy superestimou). Caímos p/ **4º** (Ura saltou p/ 0.80). 5/5 usadas → resta só a final (set). |
 
 > ⚠️ **O val-proxy local não previu o leaderboard:** macula 0.24 / final 0.12 local → **0.65 real**.
 > O placar real inclui WideField (50%), Triton (penalidade) e MASD severo — nada disso aparece no

@@ -33,18 +33,23 @@
 > Âncora real agora = **0.65**. Toda melhoria futura se mede contra isso (e só via submissão real,
 > já que WideField/Triton não existem no val local). Restam **4 balas** (+1 final).
 
-### Ranking ATUAL (27/06) — 🥉 3º LUGAR
+### Ranking ATUAL (28/06) — 4º LUGAR (fase de submissão ENCERRADA, 5/5)
 | # | Time | Final | Mácula | WideField |
 |---|---|---|---|---|
 | 1 | pooyak | 0.82 | 0.86 | 0.77 |
-| 2 | nairulislam | 0.78 | 0.83 | 0.72 |
-| **3** | **nós (3156, big384)** | **0.74** | **0.78** | **0.69** |
-| 4 | rickychan2014 | 0.70 | 0.72 | 0.68 |
+| 2 | Ura | 0.80 | 0.83 | 0.77 |
+| 3 | nairulislam | 0.78 | 0.83 | 0.72 |
+| **4** | **nós (3164, +TTA)** | **0.75** | **0.79** | **0.70** |
+| 5 | sakir99 | 0.73 | 0.79 | 0.68 |
 
-**Bala #4 (big384) = 0.74** (de 0.72): WideField 0.67→0.69, Mácula 0.78 estável. Modelo maior = +0.02
-(retornos decrescentes vs a aug). **4/5 balas usadas → resta 1 + a final.** Gap p/ 2º = 0.04 (Mácula é a
-maior lacuna: 0.78 vs 0.83-0.86). Submissão vai até **07/09** → dá pra iterar offline sem pressa e só
-gastar a última bala com ganho validado.
+**Bala #5 (TTA) = 0.75** (de 0.74): Mácula 0.78→0.79, WideField 0.69→0.70 (TTA deu só +0.01 real — o proxy
+superestimou). **5/5 balas usadas → resta SÓ a final** (07-14/09, test set novo, mesmo treino).
+Caímos p/ 4º porque a Ura saltou 0.68→0.80. Gap p/ 3º (nairul) = 0.03, p/ 2º (Ura) = 0.05.
+**Plano até a final:** desenvolver offline (boundary/surface loss p/ MASD, ensembling, 512) SEM custo de bala,
+validar no proxy, e submeter a melhor versão na final. Nossa pipeline-base (big384+widefield2+TTA) = 0.75.
+
+> ⚠️ Aprendizado: o proxy acertou a DIREÇÃO (aug/capacidade/res/TTA todos ajudaram) mas erra a MAGNITUDE
+> (TTA: previu ~+0.045, real +0.01). Usar como gradiente, não previsor exato.
 
 **Sweep de resolução (offline, 16-128/widefield2, proxy):**
 | img_size | plain | cosine.30 | radial.50 |
