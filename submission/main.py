@@ -116,104 +116,58 @@ def main():
             shutil.copy2(_shipped + ".arch.json", fallback_ckpt + ".arch.json")
         log(f"fallback embarcado salvo em {fallback_ckpt}")
 
-    pretrained = find_pretrained(sub_dir)
-    warm_start = pretrained and pretrained != ckpt_out
-
     def elapsed_min():
         return (time.time() - t0) / 60.0
 
     def remaining_min():
         return max(0, TOTAL_BUDGET_MIN - elapsed_min())
 
-    # ── 1. Treino supervisionado ──────────────────────────────────────────────
-    if warm_start:
-        log(f"Warm-start encontrado: {pretrained} → fine-tune supervisionado")
-        # Renomeia o checkpoint pré-treinado para não sobrescrever durante o treino
-        pretrained_backup = os.path.join(sub_dir, "checkpoints", "pretrained.pth")
-        if not os.path.exists(pretrained_backup):
-            import shutil; shutil.copy2(pretrained, pretrained_backup)
-            arch_src = pretrained + ".arch.json"
-            if os.path.exists(arch_src):
-                shutil.copy2(arch_src, pretrained_backup + ".arch.json")
-        epochs_sup  = 60
-        budget_sup  = min(40, remaining_min() * 0.45)
-    else:
-        log("Sem checkpoint pré-treinado — treino supervisionado completo")
-        pretrained_backup = None
-        epochs_sup  = 200
-        budget_sup  = min(50, remaining_min() * 0.55)
+    def run_ok(cmd):  # treino de membro: falha não derruba a submissão inteira
+        try:
+            run(cmd, cwd=sub_dir); return True
+        except subprocess.CalledProcessError as e:
+            log(f"[AVISO] membro falhou ({e}) — sigo com os demais"); return False
 
-    # Arch maior (48-384) — validada offline no proxy (ganha em Mácula e robustez geométrica).
-    arch_file = (pretrained_backup or "") + ".arch.json" if pretrained_backup else None
-    channels = "48,96,192,384"
-    img_size  = 384
-    if arch_file and os.path.exists(arch_file):
-        a = json.load(open(arch_file))
-        channels = ",".join(str(c) for c in a.get("channels", [48, 96, 192, 384]))
-        img_size  = a.get("img_size", 384)
+    # ── ENSEMBLE multi-resolução (validado offline: +0.025 Mácula, +0.022 WideField vs único) ──
+    # Cada membro: supervisionado + semi (widefield2), em resolução diferente (diversidade).
+    # Orçamento POR MEMBRO é dinâmico (sobra / membros restantes) → robusto a overrun.
+    ENSEMBLE = [(256, "16,32,64,128"), (384, "16,32,64,128"), (512, "16,32,64,128")]
+    INFER_RESERVE_MIN = 15
+    n = len(ENSEMBLE)
+    trained = []
+    for i, (res, channels) in enumerate(ENSEMBLE):
+        slot = max(6.0, (remaining_min() - INFER_RESERVE_MIN) / max(1, n - i))
+        out_i = os.path.join("checkpoints", f"m{i}")
+        ckpt_i = os.path.join(sub_dir, out_i, "unet_maestro2_semi.pth")
+        log(f"── membro {i+1}/{n}: {res}px {channels} | orçamento ~{slot:.1f} min ──")
+        ok = run_ok([
+            py(), "train_daoct.py", "--data_root", data_root, "--out", out_i,
+            "--epochs", "150", "--batch_size", "16", "--img_size", str(res), "--channels", channels,
+            "--amp", "auto", "--aug", "widefield2", "--workers", "0", "--seed", str(SEED + i),
+            "--time_budget_min", f"{slot * 0.55:.1f}",
+        ])
+        if ok and os.path.exists(ckpt_i):  # semi (warm-start no supervisionado do próprio membro)
+            semi_budget = max(2.0, min(slot * 0.45, remaining_min() - INFER_RESERVE_MIN))
+            run_ok([
+                py(), "train_daoct_semi.py", "--data_root", data_root, "--teacher", ckpt_i,
+                "--out", out_i, "--pseudo_dir", os.path.join(sub_dir, out_i, "pseudo"),
+                "--epochs", "100", "--batch_size", "16", "--img_size", str(res), "--channels", channels,
+                "--amp", "auto", "--aug", "widefield2", "--conf_threshold", "0.82", "--semi_weight", "0.5",
+                "--workers", "0", "--seed", str(SEED + i), "--time_budget_min", f"{semi_budget:.1f}",
+            ])
+        if os.path.exists(ckpt_i):
+            trained.append(ckpt_i)
+        log(f"membro {i+1}: {'ok' if os.path.exists(ckpt_i) else 'sem checkpoint'} ({elapsed_min():.1f} min decorridos)")
 
-    cmd_sup = [
-        py(), "train_daoct.py",
-        "--data_root", data_root,
-        "--out", "checkpoints",
-        "--epochs", str(epochs_sup),
-        "--batch_size", "16",
-        "--img_size", str(img_size),
-        "--channels", channels,
-        "--amp", "auto",
-        "--aug", "widefield2",  # generalização geométrica p/ wide-field (validado offline no proxy)
-        "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
-        "--seed", str(SEED),
-        "--time_budget_min", f"{budget_sup:.1f}",
-    ]
-    if pretrained_backup:
-        # train_daoct.py aceita --warm_start se implementado (fallback: treina do zero)
-        pass
-    run(cmd_sup, cwd=sub_dir)
-    log(f"Supervisionado concluído em {elapsed_min():.1f} min")
-
-    # ── 2. Semi-supervisão ────────────────────────────────────────────────────
-    # mais épocas de semi: agora inclui wide-field (descoberta genérica) — mais domínio p/ adaptar
-    epochs_semi = 100 if warm_start else 150
-    budget_semi = min(48, remaining_min() * 0.90)
-
-    cmd_semi = [
-        py(), "train_daoct_semi.py",
-        "--data_root", data_root,
-        "--teacher",   ckpt_out,
-        "--out",       "checkpoints",
-        "--pseudo_dir", pseudo_dir,
-        "--epochs", str(epochs_semi),
-        "--batch_size", "16",
-        "--img_size", str(img_size),
-        "--channels", channels,
-        "--amp", "auto",
-        "--aug", "widefield2",  # generalização geométrica p/ wide-field (validado offline no proxy)
-        "--conf_threshold", "0.82",
-        "--semi_weight", "0.5",
-        "--workers", "0",  # 0 = sem DataLoader workers: evita 'Bus error' no /dev/shm 64MB do container
-        "--seed", str(SEED),
-        "--time_budget_min", f"{budget_semi:.1f}",
-    ]
-    run(cmd_semi, cwd=sub_dir)
-    log(f"Semi-supervisão concluída em {elapsed_min():.1f} min")
-
-    # ── 3. Inferência ─────────────────────────────────────────────────────────
-    # Usa o modelo treinado; se o treino não produziu nada (tempo curto/erro), cai no fallback.
-    infer_ckpt = ckpt_out if os.path.exists(ckpt_out) else fallback_ckpt
-    if infer_ckpt is None:
-        infer_ckpt = ckpt_out  # deixa o erro de "arquivo não existe" explícito no log
-    elif infer_ckpt != ckpt_out:
-        log(f"[AVISO] treino não gerou checkpoint — usando fallback embarcado: {infer_ckpt}")
-    log(f"Inferindo em {infer_dir} → {output_dir} (modelo: {infer_ckpt})")
+    # ── Inferência por ENSEMBLE (média de softmax) + TTA + refine + native ──
+    models = trained if trained else ([fallback_ckpt] if fallback_ckpt else [ckpt_out])
+    log(f"Ensemble de {len(models)} modelo(s) → inferência em {infer_dir} → {output_dir}")
     run([
-        py(), "infer_daoct.py",
-        "--input_dir",  infer_dir,
+        py(), "infer_ensemble.py",
+        "--models", *models,
+        "--input_dir", infer_dir,
         "--output_dir", output_dir,
-        "--model_path", infer_ckpt,
-        "--refine",
-        "--native_size",
-        "--tta",  # test-time aug (h-flip + 2 escalas) — validado offline, +0.045 no WideField
+        "--refine", "--native_size", "--tta",
     ], cwd=sub_dir)
 
     log(f"Concluído em {elapsed_min():.1f} min total.")

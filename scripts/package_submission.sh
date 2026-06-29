@@ -18,6 +18,7 @@ OUT="$ROOT/submission_${VER}.zip"
 cp "$ROOT/scripts/train_daoct.py"      "$ROOT/submission/"
 cp "$ROOT/scripts/train_daoct_semi.py" "$ROOT/submission/"
 cp "$ROOT/scripts/infer_daoct.py"      "$ROOT/submission/"
+cp "$ROOT/scripts/infer_ensemble.py"   "$ROOT/submission/"
 
 # Atualiza checkpoint com o melhor disponível
 CKPT_SRC=""
