@@ -45,8 +45,12 @@
 **Bala #5 (TTA) = 0.75** (de 0.74): Mácula 0.78→0.79, WideField 0.69→0.70 (TTA deu só +0.01 real — o proxy
 superestimou). **5/5 balas usadas → resta SÓ a final** (07-14/09, test set novo, mesmo treino).
 Caímos p/ 4º porque a Ura saltou 0.68→0.80. Gap p/ 3º (nairul) = 0.03, p/ 2º (Ura) = 0.05.
-**Plano até a final:** desenvolver offline (boundary/surface loss p/ MASD, ensembling, 512) SEM custo de bala,
-validar no proxy, e submeter a melhor versão na final. Nossa pipeline-base (big384+widefield2+TTA) = 0.75.
+**Plano até a final:** desenvolver offline (ensembling, 512) SEM custo de bala, validar no proxy,
+e submeter a melhor versão na final. Nossa pipeline-base (big384+widefield2+TTA) = 0.75.
+
+**❌ Boundary loss (HausdorffDTLoss) — DESCARTADO (28/06):** sweep offline 0.01/0.02 vs baseline PIOROU tudo
+(plain 0.754→0.747→0.735; val_dice 0.872→0.857→0.846; pior com mais peso). HD desestabiliza o treino, não
+refina a borda. Validação offline pegou antes de gastar bala. Próximo lever: **ensembling** (mais confiável).
 
 > ⚠️ Aprendizado: o proxy acertou a DIREÇÃO (aug/capacidade/res/TTA todos ajudaram) mas erra a MAGNITUDE
 > (TTA: previu ~+0.045, real +0.01). Usar como gradiente, não previsor exato.
