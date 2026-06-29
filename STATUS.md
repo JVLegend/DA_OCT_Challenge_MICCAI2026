@@ -58,6 +58,13 @@ modelo grande sozinho (big384 plain 0.781). **Forte candidato pra final.** Desaf
 nas 2h? → projetar pipeline de ensemble enxuto (modelos pequenos multi-res) ou snapshot-ensemble (1 run).
 `scripts/eval_ensemble_proxy.py`.
 
+**🎯 SUBMISSÃO DA FINAL — pipeline de ensemble CONSTRUÍDO (28/06):** `main.py` treina 3 membros multi-res
+(256/384/512, widefield2, sup+semi, orçamento dinâmico/membro, falha não-fatal) → `infer_ensemble.py`
+(média de softmax) + TTA + refine + native. Smoke end-to-end OK. Zip: `submission_round8_ensemble.zip`.
+⚠️ **NÃO testado no leaderboard** (sem balas; só a final em set). Validado só offline (proxy superestima).
+**Decisão em aberto p/ a final:** composição do ensemble — 3× pequenos (16-128, atual) vs incluir o big384
+(provado, 0.75). Refinar com mais validação offline ANTES de submeter a final. Base segura: big384+TTA=0.75.
+
 > ⚠️ Aprendizado: o proxy acertou a DIREÇÃO (aug/capacidade/res/TTA todos ajudaram) mas erra a MAGNITUDE
 > (TTA: previu ~+0.045, real +0.01). Usar como gradiente, não previsor exato.
 
