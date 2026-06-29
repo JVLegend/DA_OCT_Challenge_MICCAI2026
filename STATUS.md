@@ -50,7 +50,13 @@ e submeter a melhor versão na final. Nossa pipeline-base (big384+widefield2+TTA
 
 **❌ Boundary loss (HausdorffDTLoss) — DESCARTADO (28/06):** sweep offline 0.01/0.02 vs baseline PIOROU tudo
 (plain 0.754→0.747→0.735; val_dice 0.872→0.857→0.846; pior com mais peso). HD desestabiliza o treino, não
-refina a borda. Validação offline pegou antes de gastar bala. Próximo lever: **ensembling** (mais confiável).
+refina a borda. Validação offline pegou antes de gastar bala.
+
+**✅ Ensembling — VALIDADO (28/06):** ensemble multi-resolução {256,384,512} + TTA (média de softmax) no proxy:
+plain 0.778→**0.803** (+0.025, Mácula), cosine 0.679→**0.701** (+0.022, WideField), radial flat. Bate até o
+modelo grande sozinho (big384 plain 0.781). **Forte candidato pra final.** Desafio: treinar N modelos cabe
+nas 2h? → projetar pipeline de ensemble enxuto (modelos pequenos multi-res) ou snapshot-ensemble (1 run).
+`scripts/eval_ensemble_proxy.py`.
 
 > ⚠️ Aprendizado: o proxy acertou a DIREÇÃO (aug/capacidade/res/TTA todos ajudaram) mas erra a MAGNITUDE
 > (TTA: previu ~+0.045, real +0.01). Usar como gradiente, não previsor exato.
