@@ -2,25 +2,20 @@
 
 Projeto: **DA-OCT Challenge (MICCAI 2026)** — segmentação de retina OCT cross-vendor (domain adaptation).
 
-> ## 🎯 TAREFA ATUAL (endgame — 27/06/2026)
-> Estamos em **🥉 3º lugar (0.74)**. **4/5 balas usadas → resta 1 bala regular + a final.** Por isso
-> estamos **SEGURANDO a última bala** e validando offline antes de gastar. **NÃO submeta nada.**
+> ## 🎯 TAREFA ATUAL (28/06/2026)
+> O JV competiu como time próprio e está em **4º lugar (0.75)** — fase de submissão dele encerrada (5/5).
 >
-> **Sua tarefa (se tiver GPU): rodar o experimento de resolução e reportar.**
-> 1. Garanta ambiente + dados (ver RUNBOOK_5090.md §Passo 0-2; se já rodou aqui antes, já está pronto).
-> 2. `bash scripts/exp_resolution.sh` — treina 256/384/512px (16-128, widefield2) e imprime a tabela
->    do proxy. Na 5090 leva ~20-40min.
-> 3. **Cole a tabela final** (e/ou atualize `STATUS.md` na seção endgame) e **commit + push** dos
->    `results/` + `STATUS.md`. Decisão (do João): se **512 > 384 > 256** (sobretudo no `plain`), a
->    bala #5 será 512px no arch grande 48-384; senão, descartamos 512 e tentamos outro lever.
-> 4. **Não** monte nem suba submissão — só o experimento. O João decide a bala.
+> **Se você está na máquina do Dr. Sakuno** (time próprio, 5 balas frescas): siga o **[PLAN_SAKUNO.md](PLAN_SAKUNO.md)**
+> — é o playbook completo da campanha de submissões dele (o que já foi validado/descartado, como montar
+> cada submissão, e o plano das 5 balas). **Valide offline no proxy ANTES de cada bala.**
+>
+> **Se você está na máquina do JV** (sem mais balas): só desenvolvimento offline p/ a final (ver STATUS.md).
 
 ## Detecte o ambiente primeiro
 Rode `nvidia-smi`:
 
-- **Tem GPU NVIDIA (ex.: a RTX 5090)** → máquina de treino. Faça a **TAREFA ATUAL** acima. (O
-  [RUNBOOK_5090.md](RUNBOOK_5090.md) descreve o pipeline completo de submissão, mas **agora não
-  submetemos** — só rodamos o experimento de resolução.)
+- **Tem GPU NVIDIA (ex.: a RTX 5090 do Dr. Sakuno)** → máquina de treino/submissão. Siga o
+  **[PLAN_SAKUNO.md](PLAN_SAKUNO.md)** (campanha de 5 submissões) + **[RUNBOOK_5090.md](RUNBOOK_5090.md)** (setup).
 
 - **Sem GPU (Mac/dev)** → é máquina de desenvolvimento. Veja o [README.md](README.md) e os `docs/`.
   Dá pra treinar a F1 no MPS (`scripts/train_daoct.py`), mas o pesado vai pra 5090/Kaggle.

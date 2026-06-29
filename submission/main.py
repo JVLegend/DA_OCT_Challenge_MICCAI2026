@@ -131,7 +131,15 @@ def main():
     # ── ENSEMBLE multi-resolução (validado offline: +0.025 Mácula, +0.022 WideField vs único) ──
     # Cada membro: supervisionado + semi (widefield2), em resolução diferente (diversidade).
     # Orçamento POR MEMBRO é dinâmico (sobra / membros restantes) → robusto a overrun.
-    ENSEMBLE = [(256, "16,32,64,128"), (384, "16,32,64,128"), (512, "16,32,64,128")]
+    # Configurável por env var DAOCT_ENSEMBLE = "res:canais res:canais ..." (sem edição de código):
+    #   single big384 (comprovado 0.75): DAOCT_ENSEMBLE="384:48,96,192,384"
+    #   ensemble + big:                  DAOCT_ENSEMBLE="384:48,96,192,384 256:16,32,64,128 512:16,32,64,128"
+    _env = os.environ.get("DAOCT_ENSEMBLE", "").strip()
+    if _env:
+        ENSEMBLE = [(int(t.split(":")[0]), t.split(":")[1]) for t in _env.split()]
+    else:
+        ENSEMBLE = [(256, "16,32,64,128"), (384, "16,32,64,128"), (512, "16,32,64,128")]
+    log(f"ENSEMBLE = {ENSEMBLE}")
     INFER_RESERVE_MIN = 15
     n = len(ENSEMBLE)
     trained = []
