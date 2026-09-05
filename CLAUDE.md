@@ -2,14 +2,19 @@
 
 Projeto: **DA-OCT Challenge (MICCAI 2026)** — segmentação de retina OCT cross-vendor (domain adaptation).
 
-> ## 🎯 TAREFA ATUAL (28/06/2026)
-> O JV competiu como time próprio e está em **4º lugar (0.75)** — fase de submissão dele encerrada (5/5).
+> ## 🚨 FINAL É SEGUNDA 07/09 — enfileirar nesse dia
+> O JV competiu como time próprio e ficou em **4º lugar (0.75)** — fase de submissão dele encerrada (5/5).
+>
+> **Regra da final (e-mail dos organizadores):** 1 submissão única = a MELHOR da fase, **algoritmo INALTERADO
+> (NÃO um modelo novo)**. → **A final do JV = re-submeter o `submission_round7_tta.zip` (0.75), sem mudar nada**
+> (código na tag git `final-submission-round7-tta`). No Fact Sheet, Docker Image = `bearceb/daoct-baseline:latest`.
+> ⛔ NÃO submeter o ensemble na final. Detalhe em **[STATUS.md](STATUS.md)** (topo).
 >
 > **Se você está na máquina do Dr. Sakuno** (time próprio, 5 balas frescas): siga o **[PLAN_SAKUNO.md](PLAN_SAKUNO.md)**
-> — é o playbook completo da campanha de submissões dele (o que já foi validado/descartado, como montar
-> cada submissão, e o plano das 5 balas). **Valide offline no proxy ANTES de cada bala.**
+> — playbook completo (o que foi validado/descartado, como montar cada submissão, plano das 5 balas; ele PODE
+> testar o ensemble nas balas dele). **Valide offline no proxy ANTES de cada bala.** A final dele = a melhor bala dele, inalterada.
 >
-> **Se você está na máquina do JV** (sem mais balas): só desenvolvimento offline p/ a final (ver STATUS.md).
+> **Se você está na máquina do JV** (sem mais balas): só re-submeter o round7_tta na final (ver STATUS.md).
 
 ## Detecte o ambiente primeiro
 Rode `nvidia-smi`:

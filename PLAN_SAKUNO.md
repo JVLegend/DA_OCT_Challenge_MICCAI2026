@@ -51,7 +51,11 @@ Antes de CADA submissão, valide a config no proxy: `scripts/exp_resolution.sh` 
    Provável melhor combinação (junta capacidade + diversidade).
 4. **Refinar o vencedor de #1-3:** ler o breakdown (Mácula vs WideField no leaderboard) e atacar o pior.
    Opções: +1 membro com seed diferente; tunar `--conf_threshold`/`--semi_weight` da semi; img maior no membro big.
-5. **Melhor config** (ou guardar p/ a final). A **final** (set, test novo) trava a melhor.
+5. **Melhor config** — e IMPORTANTE (regra dos organizadores): a **submissão FINAL** deve ser a sua
+   **MELHOR submissão da fase, algoritmo INALTERADO — NÃO um modelo novo**. O mais seguro é re-submeter
+   o MESMO código/docker da sua melhor bala. **Enfileire no dia 07/09** (rodam back-to-back). No Fact Sheet,
+   informe o Docker Image (se usar a default: `bearceb/daoct-baseline:latest`). Então: use as 5 balas pra
+   ACHAR sua melhor config (incluindo testar o ensemble round8), e a final = essa melhor, sem alterar.
 
 ## 4. Diagnóstico (grátis, a cada submissão)
 Aba **Results** do CodaBench mostra colunas **Final / Macula / Widefield** por submissão. Use pra decidir:
