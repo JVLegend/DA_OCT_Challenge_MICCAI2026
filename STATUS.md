@@ -1,6 +1,20 @@
 # STATUS — DA-OCT Challenge
 
-Última atualização: 2026-06-26 (F3+F4 concluídos — pipeline de submissão pronto)
+Última atualização: 2026-09-13 (competição ENCERRADA)
+
+## 🏁 RESULTADO FINAL: 18º de 22, score 0.7257
+
+Final Phase encerrada. Submissão `submission_round7_tta.zip` (ID 3420, 09/09) rodou
+Finished e pontuou **0.7257** (Mácula 0.7586, WideField 0.6928). Topo: yzjaxon 0.807.
+Dr. Sakuno (`gsakuno`, time próprio) ficou em 15º com 0.768.
+
+> **A autópsia completa está em [LESSONS.md](LESSONS.md).** Leia antes de reaproveitar
+> qualquer coisa daqui. Conclusão principal, que contraria o que assumimos a campanha
+> inteira: a adaptação de domínio FUNCIONOU (nosso gap Mácula-WideField de -0.066 é
+> nível de campeão), o que faltou foi qualidade bruta de segmentação, com déficit
+> uniforme de ~0.08 nas três métricas.
+
+O histórico abaixo é o log da campanha e fica preservado como registro.
 
 ## Estado
 - ✅ F0: pipeline local fechado. Baseline: **macula_score = 0.2234**.
