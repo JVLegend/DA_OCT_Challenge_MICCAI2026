@@ -67,3 +67,14 @@ Acompanhe o resultado em **[STATUS.md](STATUS.md)** (atualizado automaticamente 
 - [[docs/07_insights_forum]] — descobertas do fórum (treino in-container, gotchas, quota)
 
 #PhD #Tecnologia #Saude #Academia
+<!-- MIGRACAO_HD_EXTERNO_SUPERJV -->
+
+## Armazenamento local
+
+Tags: #Tecnologia #MacMini #Arquivo
+
+Este projeto foi migrado em 2026-07-09 para o HD externo do Mac mini.
+
+- Caminho principal: `/Volumes/Karine HD Externo/Dados_JV/Projetos_GitHub/DA_OCT_Challenge_MICCAI2026`
+- Caminho legado preservado por symlink: `/Users/iaparamedicos/Documents/GitHub/DA_OCT_Challenge_MICCAI2026`
+
